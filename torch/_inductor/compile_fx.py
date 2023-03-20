@@ -136,6 +136,11 @@ def compile_fx_inner(
     is_backward=False,
     graph_id=None,
 ):
+    if config.debug:
+        print("compile_fx_inner begin")
+        gm.print_readable()
+        print("compile_fx_inner end")
+
     if is_tf32_warning_applicable(gm):
         _warn_tf32_disabled()
 
