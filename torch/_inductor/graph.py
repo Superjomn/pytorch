@@ -570,7 +570,9 @@ class GraphLowering(torch.fx.Interpreter):
 
         code = self.codegen()
         if config.debug:
+            print("inductor code begin")
             print(code)
+            print("inductor code end")
 
         mod = PyCodeCache.load(code)
         for name, value in self.constants.items():
