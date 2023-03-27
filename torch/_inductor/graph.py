@@ -61,6 +61,7 @@ def supported_dtype_of_cpp_wrapper(dtype):
 
 
 class GraphLowering(torch.fx.Interpreter):
+    graph_count = 0
     def symbolic_sizes_strides(self, ex: torch.Tensor):
         """
         Support dynamic shapes and dynamic strides by assigning variables
@@ -513,6 +514,7 @@ class GraphLowering(torch.fx.Interpreter):
         return
 
     def codegen(self):
+        
         from .scheduler import Scheduler
 
         self.init_wrapper_code()
@@ -520,6 +522,8 @@ class GraphLowering(torch.fx.Interpreter):
         self.scheduler = Scheduler(self.buffers)
         assert self.scheduler is not None  # mypy can't figure this out
         self.scheduler.codegen()
+
+        GraphLowering.graph_count += 1
         assert self.wrapper_code is not None
         return self.wrapper_code.generate()
 

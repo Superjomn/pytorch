@@ -125,6 +125,7 @@ def count_bytes_inner(gm, example_inputs, num_fixed=0, **kwargs):
         metrics.nodes_num_elem += nodes_num_elem
     return make_boxed_func(gm.forward)
 
+graph_id = ""
 
 @DebugContext.wrap
 @torch.utils._python_dispatch._disable_current_modes()
@@ -208,7 +209,7 @@ def compile_fx_inner(
                         "skipping cudagraphs due to complex input striding"
                     )
 
-    result = align_inputs(compiled_fn, example_inputs, range(num_fixed))
+    result = align_inputs(compiled_fn, example_inputs, range(num_fixed), graph_id=graph_id)
     _step_logger()(
         logging.INFO,
         "torchinductor done compiling "
@@ -229,7 +230,7 @@ def clone_preserve_strides(x):
     return torch.as_strided(buffer, x.size(), x.stride())
 
 
-def align_inputs(model, inputs, static_input_idxs=()):
+def align_inputs(model, inputs, static_input_idxs=(), graph_id=""):
     def is_aligned(storage_offset, dtype):
         return (storage_offset * get_dtype_size(dtype)) % ALIGNMENT == 0
 
@@ -247,10 +248,22 @@ def align_inputs(model, inputs, static_input_idxs=()):
         return model
 
     def run(new_inputs):
+        if config.enable_nvtx:
+            torch.cuda.nvtx.range_push(f"inductor-outer-{graph_id}")
+
         for i in check_inputs:
             if new_inputs[i].data_ptr() % ALIGNMENT:
                 new_inputs[i] = clone_preserve_strides(new_inputs[i])
-        return model(new_inputs)
+        if config.enable_nvtx:
+            torch.cuda.nvtx.range_push(f"inductor-{graph_id}")
+        res = model(new_inputs)
+        if config.enable_nvtx:
+            torch.cuda.nvtx.range_pop()
+
+        if config.enable_nvtx:
+            torch.cuda.nvtx.range_pop()
+
+        return res
 
     return run
 

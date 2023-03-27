@@ -227,6 +227,8 @@ class trace:
     # Needs to be overriden based on specific environment needs
     upload_tar = None
 
+enable_nvtx = False
+
 
 from .._dynamo.config_utils import install_config_module
 

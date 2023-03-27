@@ -7,6 +7,7 @@ import logging
 import math
 import operator
 from typing import Dict, List, Set
+import itertools
 
 import sympy
 
@@ -39,6 +40,9 @@ from .common import (
 )
 
 log = logging.getLogger(__name__)
+
+global_kernel_counter = itertools.count()
+
 
 
 def signature_of(arg):
@@ -1563,9 +1567,12 @@ class TritonScheduling:
                 if config.triton.descriptive_kernel_names
                 else ""
             )
-            kernel_name = "_".join(["triton", fused_name, wrapper.next_kernel_suffix()])
+            #kernel_name = "_".join(["triton", fused_name, wrapper.next_kernel_suffix()])
+            kernel_name = "_".join(["triton", fused_name, f"{next(global_kernel_counter)}"])
             wrapper.kernels[src_code] = kernel_name
             subs_name = kernel_name if config.triton.ordered_kernel_names else "triton_"
+            #suffix = str(abs(hash(src_code)))[:6]
+            #subs_name = f"{subs_name}_{suffix}"
             src_code = src_code.replace("KERNEL_NAME", subs_name)
 
             # TODO(voz): Ostensibly, we should not need this. But there are cases where C++ codegen does

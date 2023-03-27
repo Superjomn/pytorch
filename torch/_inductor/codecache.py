@@ -653,7 +653,10 @@ class TritonFuture:
         # If the worker failed this will throw an exception.
         self.future.result()
         kernel = self.kernel = _load_kernel(self.source_code)
+        print(f'kernel: {kernel}')
         latency = time() - t0
+        name = _load_kernel_name(self.source_code)
+        print(f'triton kernel name: {name}')
         if latency > 50:
             name = _load_kernel_name(self.source_code)
             developer_warning(
